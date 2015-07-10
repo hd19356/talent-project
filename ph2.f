@@ -33,7 +33,7 @@ c______________________________________________________________________
       integer i,j,nl,i1,i2,i3,i4,ns
       parameter(nl=4,ns=2*nl)
       integer :: spbl(ns),spbs(ns),mps(ns),b4bd(4,6),b2bd(2,28)
-      integer :: hos(8),hf(8),ham1(6,6)
+      integer :: hos(8),hf(8),ham1(6,6),ham2(6,6)
 
       i=0
 
@@ -43,8 +43,9 @@ c______________________________________________________________________
  1003 format('2p basis:')
  1004 format('1p states in 2p basis:')
  1005 format(502i2)
- 1006 format('1p hamiltonian strength & occupied level:')
- 1007 format('1p hamiltonian matrix')
+ 1006 format('1b hamiltonian strength & occupied level:')
+ 1007 format('1b hamiltonian matrix')
+ 1008 format('2b hamiltonian matrix')
 
       open(unit=1,file='pmat.out',status='unknown')
 
@@ -89,17 +90,17 @@ c find 4-p basis
           mps(i2) = 1
           mps(i3) = 1
           mps(i4) = 1
-          if(spbs(i1).ne.-1*spbs(i2)) goto 10
-          if(spbl(i1).ne.spbl(i2)) goto 10
-          if(spbs(i3).ne.-1*spbs(i4)) goto 10
-          if(spbl(i3).ne.spbl(i4)) goto 10
-          write(1,*)(mps(i),i=1,8)
+c          if(spbs(i1).ne.-1*spbs(i2)) goto 10
+c          if(spbl(i1).ne.spbl(i2)) goto 10
+c          if(spbs(i3).ne.-1*spbs(i4)) goto 10
+c          if(spbl(i3).ne.spbl(i4)) goto 10
+c          write(1,*)(mps(i),i=1,8)
           write(*,*)(mps(i),i=1,8)
-          j=j+1
-          b4bd(1,j)=i1
-          b4bd(2,j)=i2
-          b4bd(3,j)=i3
-          b4bd(4,j)=i4
+c          j=j+1
+c          b4bd(1,j)=i1
+c          b4bd(2,j)=i2
+c          b4bd(3,j)=i3
+c          b4bd(4,j)=i4
    10 continue
       enddo
       enddo
@@ -195,6 +196,19 @@ c calculate 1p matrix elements
          write(1,*)(ham1(i,j),j=1,6)
       enddo
 
+c calculate 2b matrix elements
+      call tbme(b4bd,hf,hos,spbs,ham2)
+      write(*,*)
+      write(*,1008)
+      write(*,*)
+      write(1,*)
+      write(1,1008)
+      write(1,*)
+      do i=1,6
+         write(*,*)(ham2(i,j),j=1,6)
+         write(1,*)(ham2(i,j),j=1,6)
+      enddo
+
       close(1)
 
       return
@@ -257,6 +271,82 @@ c j counters ket
                enddo
             enddo
          ham1(i,j)=mel
+         enddo
+      enddo
+
+      return
+      end
+
+	subroutine tbme(b4bd,hf,hos,spbs,ham2)			!try !sijie
+
+c GLOSSARY:
+c______________________________________________________________________
+c
+c a       : counter
+c
+c b       : counter
+c b4bd    : 4p basis matrix
+c 
+c ham2    : diagonal part of the hamiltonian matrix
+c hf      : hamiltonian strength array
+c hos     : hamiltonian occupied state array
+c spbs	  : array of spins
+c
+c i       : counter
+c
+c j       : counter
+c
+c k       : counter
+c
+c l       : counter
+c
+c m       : counter
+c mel     : hamiltonian matrix element
+c melt    : temporary hamiltonian matrix element
+c______________________________________________________________________
+
+      implicit none
+
+      integer :: i,j,k,l,m,a,b,bra,ket
+      integer :: b4bd(4,6),hf(8),hos(8),ham2(6,6),spbs(8)
+      real    :: mel,melt
+
+
+c i counters bras
+c j counters ket
+      do bra=1,6					
+         do ket=1,6
+            mel=0.d0
+	      do i=1,4
+	        do j=1,4
+                do k=1,4
+                  do l=1,4
+                  if(b4bd(i,bra).ne.b4bd(j,bra).and.b4bd(k,ket)
+     &.ne.b4bd(l,ket).and.hf(b4bd(i,bra)).eq.hf(b4bd(j,bra)).and.
+     &hf(b4bd(k,ket)).eq.hf(b4bd(l,ket)).and.spbs(b4bd(i,bra)).eq.-1
+     &.and.spbs(b4bd(k,ket)).eq.-1)
+     &then
+				melt=1.
+	            else 
+				melt=0.
+				endif
+                  a=1
+                  b=1
+                  do m=1,2
+                    if(a.eq.i.or.a.eq.j)a=a+1
+                    if(b.eq.k.or.b.eq.l)b=b+1
+                    if(a.eq.i.or.a.eq.j)a=a+1
+                    if(b.eq.k.or.b.eq.l)b=b+1
+                    if(b4bd(a,bra).ne.b4bd(b,ket))melt=0.
+                    a=a+1
+                    b=b+1
+                  enddo
+                  mel=mel+melt
+                  enddo
+                enddo
+	        enddo
+	      enddo
+         ham2(bra,ket)=mel
          enddo
       enddo
 
