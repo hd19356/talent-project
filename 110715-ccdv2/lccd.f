@@ -9,7 +9,7 @@ c______
       integer :: i,idgn,ig,j,k,l,m,n2p,n2h,nl,nq,ns
       integer :: iwid,iwid2,iepsp,iepsm,ind
 c______
-      real    :: dg,g,g2,deccd
+      real    :: dg,g,g2,deccd,deccdt
 c______
       parameter(ns=8,nq=3)
 c______
@@ -167,23 +167,24 @@ c set up lccd matrix only 2p and 2h contributions
       alccd(:,:)=0
 
 c set up epsilon vector for lccd matrix
-      i=1
-      k=1
-      l=1
-      do m=1,iwid2
-         do j=1,iwid2
-            iepsp  =iobas(ic2pp(i,l),1)+iobas(ic2pp(i+1,l),1)
-            iepsm  =iobas(ic2hp(i,j),1)+iobas(ic2hp(i+1,j),1)
-            eps(k) =1.*(iepsp-iepsm)
-            k=k+1
-         enddo
-         l=l+1
-      enddo
+c      i=1
+c      k=1
+c      l=1
+c      do m=1,iwid2
+c         do j=1,iwid2
+c            iepsp   =iobas(ic2pp(i,l),1)+iobas(ic2pp(i+1,l),1)
+c            iepsm   =iobas(ic2hp(i,j),1)+iobas(ic2hp(i+1,j),1)
+c            eps(k)  =1.*(iepsp-iepsm)
+c            k=k+1
+c         enddo
+c         l=l+1
+c      enddo
 c interaction strength loop
       do ig=1,200
          g =g+dg
          g2=g/2.
          deccd=0.
+         eps(:)=0.
          write(*,*)
          write(*,1002)g
          write(*,*)
@@ -201,6 +202,20 @@ c interaction strength loop
             write(*,1001)(vmat(i,j),j=1,iwid)
          enddo
          write(*,*)
+
+c set up epsilon vector for lccd matrix
+         i=1
+         k=1
+         l=1
+         do m=1,iwid2
+            do j=1,iwid2
+               iepsp   =iobas(ic2pp(i,l),1)+iobas(ic2pp(i+1,l),1)
+               iepsm   =iobas(ic2hp(i,j),1)+iobas(ic2hp(i+1,j),1)
+               eps(k)  =1.*(iepsp-iepsm)
+               k=k+1
+            enddo
+            l=l+1
+         enddo
 
 c add interaction matrix elements to epsilon vector
          i=1
@@ -290,10 +305,11 @@ c solve non-homogenous system
 
 c calculate correlation energy
          do i=1,iwid
-            if(i.le.2) deccd=deccd+0.25*vmat(i,3)*x(i)
-            if(i.gt.2) deccd=deccd+0.25*vmat(i,4)*x(i)
+            if(i.le.2) deccd=deccd+1.00*vmat(i,3)*x(i)
+            if(i.gt.2) deccd=deccd+1.00*vmat(i,4)*x(i)
          enddo
-         write(2,1001)g,deccd,x
+         deccdt=g**2.*(2.*g-7)/2./(g-4.)/(2.*g-3.)
+         write(2,1001)g,deccd,x,deccdt
 c         write(*,1001)g,deccd,x
       enddo
       write(*,*)

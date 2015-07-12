@@ -2,9 +2,14 @@ set terminal postscript enhanced
 set output "deccd-g.eps"
 #
 set xlabel "g"
-set ylabel "{/Symbol D}E_{CCD}"
+set ylabel "{/Symbol D}E"
+#set yrange [-0.5:0]
 #
-plot "lccd.out" u 1:2 w l lt -1 notitle
+plot "lccd.out" u 1:2 w l lt -1 title "LCCD",\
+     "lccd.out" u 1:2 w l lt  2 title "LCCD analytical",\
+     "mbpt.out" u 1:2 w l lt  0 title "{MBPT",\
+     "diag.out" u 1:(($2)-($3)) w l lt 1 title "FCI"
+
 #
 #
 #
